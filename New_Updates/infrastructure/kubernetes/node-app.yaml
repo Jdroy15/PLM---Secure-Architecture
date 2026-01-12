@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-node
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: backend-node
+  template:
+    metadata:
+      labels:
+        app: backend-node
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - backend-node
+              topologyKey: kubernetes.io/hostname
+      containers:
+      - name: backend-node
+        image: mad-backend-node:v2
+        imagePullPolicy: Never # Important ! Utilise l'image locale importée
+        ports:
+        - containerPort: 5000
+        env:
+        # L'appli a besoin de savoir où est la BDD
+        - name: DB_HOST
+          value: "postgres-service"
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: postgres-user
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: postgres-password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-node-service
+spec:
+  type: ClusterIP
+  selector:
+    app: backend-node
+  ports:
+    - port: 80
+      targetPort: 5000

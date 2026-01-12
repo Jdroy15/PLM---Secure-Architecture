@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oauth2-proxy
+spec:
+  replicas: 2  # Redondance
+  selector:
+    matchLabels:
+      app: oauth2-proxy
+  template:
+    metadata:
+      labels:
+        app: oauth2-proxy
+    spec:
+      containers:
+      - name: oauth2-proxy
+        image: quay.io/oauth2-proxy/oauth2-proxy:v7.5.1
+        command:
+        - /bin/oauth2-proxy
+        - --provider=keycloak-oidc
+        - --client-id=mad-backend
+        - --client-secret=6rWrWJRJCRiuBXSCLvhGTBllVWTD5GOt
+        - --cookie-secret=V2kRX1G9630YajZL5t7WmjkePW3BSDWHOV1dIgmowws=
+        - --oidc-issuer-url=http://keycloak.192.168.56.10.nip.io/realms/mad
+        - --redirect-url=http://node.192.168.56.10.nip.io/oauth2/callback
+        - --email-domain=*
+        - --upstream=http://backend-node-service:80
+        - --http-address=0.0.0.0:4180
+        - --set-xauthrequest=true
+        - --pass-access-token=true
+        - --cookie-secure=false
+        - --reverse-proxy=true
+        ports:
+        - containerPort: 4180
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: oauth2-proxy-service
+spec:
+  type: ClusterIP
+  selector:
+    app: oauth2-proxy
+  ports:
+    - port: 80
+      targetPort: 4180
