@@ -35,7 +35,7 @@ Public access via nip.io domains
 
 Backend services exposed internally using ClusterIP only
 
-🛡 Security & Resilience Features
+## 🛡 Security & Resilience Features
 🔐 Zero-Trust Authentication
 
 Integrated OAuth2-Proxy with Keycloak (OIDC)
@@ -62,7 +62,7 @@ PostgreSQL and MinIO configured with persistent storage
 
 Data remains intact across pod restarts
 
-🚀 Deployment Guide
+## 🚀 Deployment Guide
 1️⃣ Infrastructure Setup (Vagrant)
 
 Start the virtual machines:
@@ -83,32 +83,27 @@ The backend build and deployment process is fully automated using Ansible.
 cd /vagrant/ansible
 ansible-playbook -i inventory.ini deploy-backend.yml
 
-
 This playbook:
-
 Builds the Docker image
-
 Exports the image
-
 Imports it into the containerd runtime on the worker node
-
 Ensures consistent and repeatable deployments
 
 3️⃣ Manual Kubernetes Deployment (Optional)
 
 If deploying manually, apply the manifests in the following order:
 
-# Secrets and database
+## Secrets and database
 kubectl apply -f kubernetes/postgres-secret.yaml
 kubectl apply -f kubernetes/postgres.yaml
 
-# OAuth2 Proxy and backend
+## OAuth2 Proxy and backend
 kubectl apply -f kubernetes/oauth2-proxy-secret.yaml
 kubectl apply -f kubernetes/oauth2-proxy.yaml
 kubectl apply -f kubernetes/node-app.yaml
 kubectl apply -f kubernetes/ingress.yaml
 
-🔗 Service Access
+## 🔗 Service Access
 
 Once deployed, services are accessible via Traefik Ingress:
 
@@ -116,24 +111,20 @@ Service	URL
 Backend API	http://node.192.168.56.10.nip.io
 Keycloak (IdP)	http://keycloak.192.168.56.10.nip.io
 MinIO	http://minio.192.168.56.10.nip.io
-🛠 Technology Stack
+
+## 🛠 Technology Stack
 🔧 Orchestration & Automation
 
 Kubernetes (v1.28+)
-
 Ansible
-
 Vagrant
 
-🔐 Security & Identity
-
+## 🔐 Security & Identity
 Keycloak (OIDC)
-
 OAuth2-Proxy
-
 Zero-Trust architecture principles
 
-⚙️ Runtime & Platform
+## ⚙️ Runtime & Platform
 
 Node.js 18
 
@@ -147,7 +138,7 @@ PostgreSQL
 
 MinIO
 
-📅 Roadmap (Next Steps)
+## 📅 Roadmap (Next Steps)
 
 Planned improvements to enhance security and resilience:
 
@@ -168,4 +159,5 @@ Zero-Trust networking principles
 Automated and repeatable deployments
 
 Production-oriented Kubernetes architecture
+
 
