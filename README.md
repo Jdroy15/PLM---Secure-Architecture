@@ -151,7 +151,7 @@ Planned improvements to enhance security and resilience:
 
 💾 Disaster Recovery: Implement Velero for automated backups (RTO: 2 hours)
 
-🎯 Key Learning Outcomes
+## 🎯 Key Learning Outcomes
 
 Secure Kubernetes backend migration
 
@@ -162,6 +162,7 @@ Zero-Trust networking principles
 Automated and repeatable deployments
 
 Production-oriented Kubernetes architecture
+
 
 
 
