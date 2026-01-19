@@ -1,0 +1,5 @@
+infrastructure/kubernetes/oauth2-proxy-secret.yaml
+infrastructure/.vagrant
+infrastructure/backend-node/mad-backend-node-v2.tar
+infrastructure/mad-backend-node-v2.tar
+*.tar

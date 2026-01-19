@@ -1,0 +1,58 @@
+---
+# ==========================================
+# PARTIE 1 : CONFIGURATION COMMUNE (TOUTES LES VMS)
+# ==========================================
+- hosts: k3s_cluster
+  become: yes
+  tasks:
+    - name: "Mise à jour des paquets (apt update)"
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: "Désactiver le SWAP (Obligatoire pour Kubernetes)"
+      shell: |
+        swapoff -a
+        sed -i '/swap/d' /etc/fstab
+      # Cette commande ne plante pas si le swap est déjà désactivé
+      failed_when: false
+
+    - name: "Installer les pré-requis (curl)"
+      apt:
+        name: curl
+        state: present
+
+# ==========================================
+# PARTIE 2 : INSTALLATION DU MASTER
+# ==========================================
+- hosts: masters
+  become: yes
+  tasks:
+    - name: "Installer K3s (Mode Serveur)"
+      shell: curl -sfL https://get.k3s.io | sh -
+      args:
+        creates: /usr/local/bin/k3s  # Ne lance pas si déjà installé
+
+    - name: "Attendre que K3s soit prêt"
+      wait_for:
+        path: /var/lib/rancher/k3s/server/node-token
+
+    - name: "Récupérer le Token du Cluster (Mot de passe)"
+      slurp:
+        src: /var/lib/rancher/k3s/server/node-token
+      register: k3s_token_base64
+
+    - name: "Stocker le Token pour l'utiliser plus tard"
+      set_fact:
+        k3s_token: "{{ k3s_token_base64.content | b64decode | trim }}"
+
+# ==========================================
+# PARTIE 3 : INSTALLATION DES WORKERS
+# ==========================================
+- hosts: workers
+  become: yes
+  tasks:
+    - name: "Installer K3s (Mode Agent/Worker)"
+      shell: "curl -sfL https://get.k3s.io | K3S_URL=https://192.168.56.10:6443 K3S_TOKEN={{ hostvars[groups['masters'][0]]['k3s_token'] }} sh -"
+      args:
+        creates: /usr/local/bin/k3s-agent

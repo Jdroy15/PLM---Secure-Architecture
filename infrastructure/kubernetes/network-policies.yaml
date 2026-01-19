@@ -1,0 +1,130 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: default
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+---
+# 1. Autoriser le DNS (Vital : sinon les services ne se trouvent pas entre eux)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-access
+  namespace: default
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  spec:
+    egress:
+    - to:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: kube-system # ou l'endroit où tourne CoreDNS
+      ports:
+      - protocol: UDP
+        port: 53
+      - protocol: TCP
+        port: 53
+
+---
+# 2. Autoriser l'Ingress (Traefik) à parler aux services Web (Keycloak, OAuth2-Proxy, Minio Console)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-to-apps
+  namespace: default
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values: [oauth2-proxy, keycloak, minio] # Ajoute ces labels à tes déploiements correspondants
+  policyTypes:
+  - Ingress
+  spec:
+    ingress:
+    - from:
+      # Si Traefik est dans un autre namespace (souvent kube-system ou traefik)
+      - namespaceSelector: {} 
+      # Si Traefik est dans le même namespace, utilise podSelector.
+      # Pour faire simple ici, on autorise tout le trafic ENTRANT vers ces services frontaux uniquement
+    
+---
+# 3. Autoriser OAuth2-Proxy à parler au Backend Node
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-proxy-to-backend
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: backend-node
+  policyTypes:
+  - Ingress
+  spec:
+    ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app: oauth2-proxy # Assure-toi que ton déploiement oauth2 a ce label
+      ports:
+      - protocol: TCP
+        port: 5000
+
+---
+# 4. Autoriser Backend Node à parler à Postgres et Minio (API)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-backend-egress
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: backend-node
+  policyTypes:
+  - Egress
+  spec:
+    egress:
+    - to:
+      - podSelector:
+          matchLabels:
+            app: postgres
+      ports:
+      - protocol: TCP
+        port: 5432
+    - to:
+      - podSelector:
+          matchLabels:
+            app: minio
+      ports:
+      - protocol: TCP
+        port: 9000
+---
+# 5. Autoriser OAuth2-Proxy à parler à Keycloak (Pour valider l'identité)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-proxy-egress-to-keycloak
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: oauth2-proxy # Le Pod source
+  policyTypes:
+  - Egress
+  spec:
+    egress:
+    - to:
+      - podSelector:
+          matchLabels:
+            app: keycloak # Le Pod destination
+      ports:
+      - protocol: TCP
+        port: 8080 # Le port de service de Keycloak

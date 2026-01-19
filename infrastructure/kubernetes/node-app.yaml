@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-node
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: backend-node
+  template:
+    metadata:
+      labels:
+        app: backend-node
+    spec:
+      # Sécurité Pod : Empêche le pod d'avoir des privilèges élevés
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000 # ID de l'user 'node'
+        fsGroup: 2000
+
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - backend-node
+              topologyKey: kubernetes.io/hostname
+      
+      containers:
+      - name: backend-node
+        image: mad-backend-node:v2.4
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 5000
+        
+        # SÉCURITÉ : Système de fichier en lecture seule (Requirement PDF)
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"] # Retire toutes les capacités Linux inutiles
+
+        # CONTINUITÉ : Vérifie que l'app est vivante
+        livenessProbe:
+          httpGet:
+            path: / # ou un endpoint /health si tu en as un
+            port: 5000
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        
+        # CONTINUITÉ : Vérifie que l'app est prête à recevoir du trafic
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
+        # STABILITÉ : Limites de ressources (évite le crash du noeud)
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+
+        env:
+        - name: DB_HOST
+          value: "postgres-service"
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: postgres-user
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: postgres-password
+        
+        # Nécessaire car le file system est Read-Only, mais Node a besoin d'écrire dans /tmp
+        volumeMounts:
+        - name: tmp-volume
+          mountPath: /tmp
+      
+      volumes:
+      - name: tmp-volume
+        emptyDir: {}

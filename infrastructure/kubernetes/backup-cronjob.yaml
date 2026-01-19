@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-backup
+spec:
+  schedule: "0 * * * *" # Toutes les heures
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: backup
+            image: postgres:15
+            command: ["/bin/sh", "-c"]
+            args:
+            - PGPASSWORD=$POSTGRES_PASSWORD pg_dump -h postgres-service -U mad_user keycloak_db > /tmp/backup.sql;
+              # Ici, idéalement, on utilise un client MC (Minio Client) pour envoyer vers Minio
+              echo "Backup réalisé (Simulation envoi S3)";
+            env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: postgres-password
+          restartPolicy: OnFailure
