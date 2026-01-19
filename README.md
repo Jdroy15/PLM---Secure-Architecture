@@ -66,9 +66,9 @@ Data remains intact across pod restarts
 1️⃣ Infrastructure Setup (Vagrant)
 
 Start the virtual machines:
-
+'''bash
 vagrant up
-
+'''
 
 This provisions:
 
@@ -159,5 +159,6 @@ Zero-Trust networking principles
 Automated and repeatable deployments
 
 Production-oriented Kubernetes architecture
+
 
 
