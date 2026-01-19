@@ -66,9 +66,9 @@ Data remains intact across pod restarts
 1️⃣ Infrastructure Setup (Vagrant)
 
 Start the virtual machines:
-'''bash
+```bash
 vagrant up
-'''
+```
 
 This provisions:
 
@@ -79,10 +79,10 @@ This provisions:
 2️⃣ Automated Backend Deployment (Ansible)
 
 The backend build and deployment process is fully automated using Ansible.
-
+```bash
 cd /vagrant/ansible
 ansible-playbook -i inventory.ini deploy-backend.yml
-
+```
 This playbook:
 Builds the Docker image
 Exports the image
@@ -94,15 +94,18 @@ Ensures consistent and repeatable deployments
 If deploying manually, apply the manifests in the following order:
 
 ## Secrets and database
+```bash 
 kubectl apply -f kubernetes/postgres-secret.yaml
 kubectl apply -f kubernetes/postgres.yaml
+```
 
 ## OAuth2 Proxy and backend
+```bash
 kubectl apply -f kubernetes/oauth2-proxy-secret.yaml
 kubectl apply -f kubernetes/oauth2-proxy.yaml
 kubectl apply -f kubernetes/node-app.yaml
 kubectl apply -f kubernetes/ingress.yaml
-
+```
 ## 🔗 Service Access
 
 Once deployed, services are accessible via Traefik Ingress:
@@ -159,6 +162,7 @@ Zero-Trust networking principles
 Automated and repeatable deployments
 
 Production-oriented Kubernetes architecture
+
 
 
 
