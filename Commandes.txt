@@ -1,54 +1,58 @@
+Docker Compose:
 docker-compose up -d
 
-Pour l'infra :
-Dans un cmd :
-- cd infrastructure
-- vagrant up
-Il faut que le master ET le worker1 fonctionne
+For the infrastructure:
+In a CMD prompt:
+cd infrastructure
+vagrant up
+Make sure both the master AND worker1 are running.
 
-Ensuite dans un wsl Ubuntu (sinon wsl --install -d Ubuntu):
-- sudo apt update
-- sudo apt install -y ansible
+Then, in a WSL Ubuntu (if not installed, run wsl --install -d Ubuntu):
+sudo apt update
+sudo apt install -y ansible
 
-Gestion des clés:
+Key Management:
 cd /mnt/c/Users/Fabri/Documents/PLM---Secure-Architecture/infrastructure
-
 mkdir -p ~/.ssh/mad_keys
 cp .vagrant/machines/master/virtualbox/private_key ~/.ssh/mad_keys/master_key
 cp .vagrant/machines/worker1/virtualbox/private_key ~/.ssh/mad_keys/worker1_key
 chmod 600 ~/.ssh/mad_keys/*
 
-ansible all -i ansible/inventory.ini -m ping (pour vérifier)
+Test connectivity with Ansible:
+ansible all -i ansible/inventory.ini -m ping
 
+Run the playbook:
 ansible-playbook -i inventory.ini site.yml
 
-vagrant ssh master (git bash)
+Access the master node:
+vagrant ssh master  # using Git Bash
 sudo k3s kubectl get nodes
 sudo k3s kubectl get pods
 sudo k3s kubectl apply -f /vagrant/kubernetes/postgres.yaml
-sudo k3s kubectl apply -f /vagrant/Kubernetes/keycloak.yaml
-sudo k3s kubectl get pods -w (en continu)
-sudo k3s kubectl apply -f /vagrant/Kubernetes/minio.yaml
-sudo k3s kubectl apply -f /vagrant/Kubernetes/ingress.yaml
+sudo k3s kubectl apply -f /vagrant/kubernetes/keycloak.yaml
+sudo k3s kubectl get pods -w  # watch continuously
+sudo k3s kubectl apply -f /vagrant/kubernetes/minio.yaml
+sudo k3s kubectl apply -f /vagrant/kubernetes/ingress.yaml
 sudo nano /etc/system/system/k3s.service
+
+# Modify ExecStart to:
 ExecStart=/usr/local/bin/k3s server --flannel-iface=eth1 --node-external-ip=192.168.56.10
 
-
-Partage de taches :
+Task sharing:
 curl -fsSL https://get.docker.com -o get-docker.sh
 sh get-docker.sh
-sudo usermode -aG docker vagrant
+sudo usermod -aG docker vagrant
 
+Docker build & transfer:
 docker build -t mad-backend-node:v1 .
 docker save -o mad-backend-node.tar mad-backend-node:v1
-
-Transfert:
 scp -o StrictHostKeyChecking=no mad-backend-node.tar vagrant@192.168.56.11:~
 
-Worker1 (connection en ssh) :
+Worker1 (SSH connection):
 sudo k3s ctr images import mad-backend-node.tar
-sudo k3s ctr images list | grep backend (vérifier)
+sudo k3s ctr images list | grep backend  # verify
 
-Master :
- sudo k3s kubectl apply -f /vagrant/kubernetes/node-app.yaml
- kubectl rollout restart deployment oauth2-proxy
+Back to Master:
+sudo k3s kubectl apply -f /vagrant/kubernetes/node-app.yaml
+kubectl rollout restart deployment oauth2-proxy
+
