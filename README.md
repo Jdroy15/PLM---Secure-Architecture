@@ -1,102 +1,170 @@
-﻿# PI2_2026_25
-MAD Infrastructure: Secure Backend Migration & Orchestration
-This project demonstrates a secure, highly available, and automated migration of a Node.js backend to a Kubernetes environment using a Zero-Trust approach. 
-+3
+#MAD Infrastructure
+Secure Backend Migration & Orchestration (Zero-Trust Kubernetes)
+
+This project demonstrates a secure, highly available, and automated migration of a Node.js backend to a Kubernetes environment, following a Zero-Trust security approach.
+
+The goal is to showcase secure backend orchestration, identity-aware access control, automation, and production-ready Kubernetes design using modern DevSecOps practices.
 
 🏗 Architecture Overview
-The infrastructure is built on a dual-node Vagrant environment (1 Master, 1 Worker).
 
+The infrastructure is deployed on a dual-node Vagrant environment consisting of:
 
-Master Node: Hosts core services including PostgreSQL, MinIO, and Keycloak.
-+1
+🔹 Master Node
 
+Hosts core infrastructure services:
 
-Worker Node: Hosts the scaled Node.js Backend and OAuth2-Proxy.
-+2
+PostgreSQL – relational database
 
+MinIO – object storage
 
-Ingress Controller: Traefik manages external routing via nip.io domains.
-+1
+Keycloak – Identity Provider (OIDC)
+
+🔹 Worker Node
+
+Runs application workloads:
+
+Node.js Backend (scaled deployment)
+
+OAuth2-Proxy for identity-aware access control
+
+🔹 Ingress & Networking
+
+Traefik Ingress Controller manages external routing
+
+Public access via nip.io domains
+
+Backend services exposed internally using ClusterIP only
 
 🛡 Security & Resilience Features
-Zero-Trust Authentication: Integrated OAuth2-Proxy with Keycloak (OIDC) to protect the backend. All requests are authenticated before reaching the application.
-+1
+🔐 Zero-Trust Authentication
 
+Integrated OAuth2-Proxy with Keycloak (OIDC)
 
-High Availability: The backend is scaled to 3 replicas with podAntiAffinity to ensure it remains available even if a node fails.
-+1
+Every request is authenticated before reaching the backend
 
+No direct access to backend services
 
-Internal Security: Replaced NodePort with ClusterIP to ensure no direct external access to the backend, forcing all traffic through the Ingress and Proxy layers.
+⚙️ High Availability
 
+Backend deployed with 3 replicas
 
-Data Persistence: PostgreSQL and MinIO are configured for persistent storage within the cluster.
-+1
+podAntiAffinity ensures resilience in case of node failure
+
+🔒 Internal Network Security
+
+Replaced NodePort with ClusterIP
+
+All traffic flows through Ingress → OAuth2-Proxy → Backend
+
+💾 Data Persistence
+
+PostgreSQL and MinIO configured with persistent storage
+
+Data remains intact across pod restarts
 
 🚀 Deployment Guide
-1. Infrastructure Setup
-Bring up the virtual machines:
+1️⃣ Infrastructure Setup (Vagrant)
 
-Bash
+Start the virtual machines:
+
 vagrant up
-2. Automated Backend Deployment (Ansible)
-I have automated the build and deployment process using Ansible to ensure consistency:
 
-Bash
+
+This provisions:
+
+1 Kubernetes Master node
+
+1 Kubernetes Worker node
+
+2️⃣ Automated Backend Deployment (Ansible)
+
+The backend build and deployment process is fully automated using Ansible.
+
 cd /vagrant/ansible
 ansible-playbook -i inventory.ini deploy-backend.yml
-This playbook builds the Docker image, exports it, and imports it into the containerd runtime on the worker node.
 
-3. Manual Kubernetes Application
-If deploying manually, apply the manifests in this order:
 
-Bash
-# Apply secrets and database
+This playbook:
+
+Builds the Docker image
+
+Exports the image
+
+Imports it into the containerd runtime on the worker node
+
+Ensures consistent and repeatable deployments
+
+3️⃣ Manual Kubernetes Deployment (Optional)
+
+If deploying manually, apply the manifests in the following order:
+
+# Secrets and database
 kubectl apply -f kubernetes/postgres-secret.yaml
 kubectl apply -f kubernetes/postgres.yaml
 
-# Apply the protected backend
+# OAuth2 Proxy and backend
 kubectl apply -f kubernetes/oauth2-proxy-secret.yaml
 kubectl apply -f kubernetes/oauth2-proxy.yaml
 kubectl apply -f kubernetes/node-app.yaml
 kubectl apply -f kubernetes/ingress.yaml
+
 🔗 Service Access
-Once deployed, the following services are available via Traefik Ingress:
 
-Backend API: http://node.192.168.56.10.nip.io
+Once deployed, services are accessible via Traefik Ingress:
 
-Identity Provider (Keycloak): http://keycloak.192.168.56.10.nip.io
+Service	URL
+Backend API	http://node.192.168.56.10.nip.io
+Keycloak (IdP)	http://keycloak.192.168.56.10.nip.io
+MinIO	http://minio.192.168.56.10.nip.io
+🛠 Technology Stack
+🔧 Orchestration & Automation
 
-Object Storage (MinIO): http://minio.192.168.56.10.nip.io
+Kubernetes (v1.28+)
 
-🛠 Tech Stack
+Ansible
 
-Orchestration: Kubernetes (v1.28+) 
-+1
+Vagrant
 
+🔐 Security & Identity
 
-Automation: Ansible 
-+1
+Keycloak (OIDC)
 
+OAuth2-Proxy
 
-Security: Keycloak (OIDC), OAuth2-Proxy 
+Zero-Trust architecture principles
 
+⚙️ Runtime & Platform
 
-Runtime: Node.js 18, Docker 
-+1
+Node.js 18
 
+Docker
 
-Database: PostgreSQL 
+containerd
 
+💾 Data & Storage
 
-Storage: MinIO 
+PostgreSQL
+
+MinIO
 
 📅 Roadmap (Next Steps)
 
-Service Mesh: Implementing Istio for mTLS and internal traffic encryption.
+Planned improvements to enhance security and resilience:
 
+🔐 Service Mesh: Integrate Istio for mTLS and encrypted internal traffic
 
-Integrity Monitoring: Deploying Falco to detect unauthorized file modifications.
+🛡 Runtime Security: Deploy Falco for integrity and behavior monitoring
 
+💾 Disaster Recovery: Implement Velero for automated backups (RTO: 2 hours)
 
-Disaster Recovery: Setting up Velero for automated backups with a 2-hour RTO.
+🎯 Key Learning Outcomes
+
+Secure Kubernetes backend migration
+
+Identity-aware access control using OIDC
+
+Zero-Trust networking principles
+
+Automated and repeatable deployments
+
+Production-oriented Kubernetes architecture
