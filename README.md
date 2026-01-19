@@ -1,5 +1,5 @@
 # MAD Infrastructure
-## Secure Backend Migration & Orchestration (Zero-Trust Kubernetes)
+## Secure Backend Migration & Orchestration 
 
 This project demonstrates a secure, highly available, and automated migration of a Node.js backend to a Kubernetes environment, following a Zero-Trust security approach.
 
@@ -162,6 +162,7 @@ Zero-Trust networking principles
 Automated and repeatable deployments
 
 Production-oriented Kubernetes architecture
+
 
 
 
